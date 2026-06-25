@@ -42,7 +42,7 @@ namespace SmboPhdService.Controllers
         }
 
         [HttpGet]
-        [Route("api/tags/find/by-pattern")]
+        [Route("api/tags/find")]
         public IHttpActionResult FindTags([FromUri] string pattern)
         {
             var rid = LogHelper.Requestid;
@@ -50,7 +50,7 @@ namespace SmboPhdService.Controllers
 
             if (string.IsNullOrWhiteSpace(pattern))
             {
-                _log.Error("[{rid}][{ip}] Incorrect data: tags/find/by-pattern", rid, ip);
+                _log.Error("[{rid}][{ip}] Incorrect data: tags/find", rid, ip);
                 return BadRequest("Search pattern is empty");
             }
 
@@ -59,13 +59,13 @@ namespace SmboPhdService.Controllers
                 var fetcher = new PhdDataFetcher();
                 var result = fetcher.FindTags(pattern);
 
-                _log.Information("[{rid}][{ip}] Complete successfully: tags/find/by-pattern (pattern={pattern})", rid, ip, pattern);
+                _log.Information("[{rid}][{ip}] Complete successfully: tags/find (pattern={pattern})", rid, ip, pattern);
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "[{rid}][{ip}] Error: tags/find/by-pattern", rid, ip);
+                _log.Error(ex, "[{rid}][{ip}] Error: tags/find", rid, ip);
 
                 if (ex.Message.Contains("PHD Error"))
                 {
@@ -77,7 +77,7 @@ namespace SmboPhdService.Controllers
         }
 
         [HttpGet]
-        [Route("api/tags/find/by-tagno")]
+        [Route("api/tags/find/with-tagno")]
         public IHttpActionResult FindTagsExtended([FromUri] string pattern)
         {
             var rid = LogHelper.Requestid;
@@ -85,7 +85,7 @@ namespace SmboPhdService.Controllers
 
             if (string.IsNullOrWhiteSpace(pattern))
             {
-                _log.Error("[{rid}][{ip}] Incorrect data: tags/find/by-tagno", rid, ip);
+                _log.Error("[{rid}][{ip}] Incorrect data: tags/find/with-tagno", rid, ip);
                 return BadRequest("Search pattern is empty");
             }
 
@@ -94,13 +94,13 @@ namespace SmboPhdService.Controllers
                 var fetcher = new PhdDataFetcher();
                 var result = fetcher.FindTagsExtended(pattern);
 
-                _log.Information("[{rid}][{ip}] Complete successfully: tags/find/by-tagno (pattern={pattern})", rid, ip, pattern);
+                _log.Information("[{rid}][{ip}] Complete successfully: tags/find/with-tagno (pattern={pattern})", rid, ip, pattern);
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                _log.Error(ex, "[{rid}][{ip}] Error: tags/find/by-tagno", rid, ip);
+                _log.Error(ex, "[{rid}][{ip}] Error: tags/find/with-tagno", rid, ip);
 
                 if (ex.Message.Contains("PHD Error"))
                 {
@@ -139,7 +139,7 @@ namespace SmboPhdService.Controllers
 
                     _log.Information("[{rid}][{ip}] Complete successfully: tags/list {tags}", rid, ip, request.Tags);
 
-                    return Ok(new { Data = results });
+                    return Ok(results);
             }
             catch (Exception ex)
             {
@@ -244,7 +244,7 @@ namespace SmboPhdService.Controllers
 
                 _log.Information("[{rid}][{ip}] Complete successfully: descriptions/list", rid, ip);
 
-                return Ok(new { Data = results });
+                return Ok(results);
             }
             catch (Exception ex)
             {
@@ -279,7 +279,7 @@ namespace SmboPhdService.Controllers
 
                 _log.Information("[{rid}][{ip}] Complete successfully: descriptions/by-pattern (pattern={pattern})", rid, ip, pattern);
 
-                return Ok(new { Data = results });
+                return Ok(results);
             }
             catch (Exception ex)
             {
