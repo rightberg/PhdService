@@ -16,7 +16,7 @@ namespace SmboPhdService.Services
     public class PhdPutData
     {
         public string Tag { get; set; }
-        public DateTime Timestamp { get; set; }
+        public DateTime? Timestamp { get; set; }
         public object Value { get; set; }
         public short Confidence { get; set; }
     }
@@ -289,7 +289,6 @@ namespace SmboPhdService.Services
             {
                 using (var phd = new PHDHistorian())
                 {
-
                     if (!fabric)
                         phd.DefaultServer = PhdConnectionFactory.GetServer();
                     else
@@ -298,20 +297,51 @@ namespace SmboPhdService.Services
                     int failed = 0;
                     int pending = 0;
 
-                    var dt = phd.DefaultServer.PutListDataTable;
-
+                    var dt = phd.DefaultServer.PutListDataTable.Clone();
                     dt.Rows.Clear();
 
                     var tag_list = new List<Tag>();
+
                     foreach (var tag in tags)
                     {
                         tag_list.Add(new Tag { TagName = tag.Tag });
 
                         DataRow dr = dt.NewRow();
-                        dr["TagName"] = tag.Tag;
-                        dr["TimeStamp"] = tag.Timestamp;
-                        dr["Value"] = tag.Value;
-                        dr["Confidence"] = (sbyte)tag.Confidence;
+                        
+                        dr["TimeStamp"] = tag.Timestamp ?? DateTime.UtcNow;
+
+                        switch (tag.Value)
+                        {
+                            case double d:
+                            case float f:
+                            case decimal dec:
+                                dr["Value"] = Convert.ToSingle(tag.Value);
+                                break;
+                            case int i:
+                            case long l:
+                            case short sh:
+                                dr["Value"] = Convert.ToInt32(tag.Value);
+                                break;
+                            case string s:
+                                dr["Value"] = s;
+                                break;
+                            default:
+                                if (tag.Value != null)
+                                {
+                                    string strValue = tag.Value.ToString();
+                                    if (float.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float parsedFloat))
+                                        dr["Value"] = parsedFloat;
+                                    else
+                                        dr["Value"] = strValue;
+                                }
+                                else
+                                {
+                                    dr["Value"] = DBNull.Value;
+                                }
+                                break;
+                        }
+
+                        dr["Confidence"] = Convert.ToSByte(tag.Confidence);
 
                         dt.Rows.Add(dr);
                     }
@@ -326,7 +356,7 @@ namespace SmboPhdService.Services
             }
             catch (Exception ex)
             {
-                throw new Exception("PHD Error put tag value: " + ex.Message);
+                throw new Exception($"PHD Error put tag value: {ex.Message}. Trace: {ex.StackTrace}");
             }
         }
     }

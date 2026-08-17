@@ -270,6 +270,41 @@ namespace SmboPhdService.Controllers
         }
 
         [HttpPost]
+        [Route("api/tags/put")]
+        public IHttpActionResult PutTagData([FromBody] PutTagRequest request)
+        {
+            var rid = LogHelper.Requestid;
+            var ip = LogHelper.RequestIp;
+
+            if (request == null || string.IsNullOrWhiteSpace(request.TagName))
+            {
+                _log.Error("[{rid}][{ip}] Incorrect data: putdata", rid, ip);
+                return BadRequest("Tag name is empty");
+            }
+
+            try
+            {
+                var fetcher = new PhdDataFetcher();
+                var result = fetcher.PutTagValue(request.TagName, request.Value, request.Timestamp, request.Confidence, request.Units);
+
+                _log.Information("[{rid}][{ip}] Complete successfully: tags/put", rid, ip);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "[{rid}][{ip}] Error: tags/put", rid, ip);
+
+                if (ex.Message.Contains("PHD Error"))
+                {
+                    return Content(System.Net.HttpStatusCode.BadGateway, ex.Message);
+                }
+
+                return InternalServerError(ex);
+            }
+        }
+
+        [HttpPost]
         [Route("api/tags/put/list")]
         public IHttpActionResult TagList([FromBody] PutTagListRequest request)
         {
