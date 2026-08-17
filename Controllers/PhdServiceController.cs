@@ -20,6 +20,16 @@ namespace SmboPhdService.Controllers
             public string Units { get; set; }
         }
 
+        public class PutTagListRequest
+        {
+            public PhdPutData[] Tags { get; set; }
+        }
+
+        public class PutTagListResp
+        {
+            public int FailedCount { get; set; }
+        }
+
         public class TagRequest
         {
             public string SampleType { get; set; } = "Raw";
@@ -134,12 +144,12 @@ namespace SmboPhdService.Controllers
                     StartTime = request.StartTime,
                     EndTime = request.EndTime
                 };
-                    
-                    var results = fetcher.FetchDataList(request.Tags, settings);
 
-                    _log.Information("[{rid}][{ip}] Complete successfully: tags/list {tags}", rid, ip, request.Tags);
+                var results = fetcher.FetchDataList(request.Tags, settings);
 
-                    return Ok(results);
+                _log.Information("[{rid}][{ip}] Complete successfully: tags/list {tags}", rid, ip, request.Tags);
+
+                return Ok(results);
             }
             catch (Exception ex)
             {
@@ -179,41 +189,6 @@ namespace SmboPhdService.Controllers
             catch (Exception ex)
             {
                 _log.Error(ex, "[{rid}][{ip}] Error: tags/last", rid, ip);
-
-                if (ex.Message.Contains("PHD Error"))
-                {
-                    return Content(System.Net.HttpStatusCode.BadGateway, ex.Message);
-                }
-
-                return InternalServerError(ex);
-            }
-        }
-
-        [HttpPost]
-        [Route("api/tags/put")]
-        public IHttpActionResult PutTagData([FromBody] PutTagRequest request)
-        {
-            var rid = LogHelper.Requestid;
-            var ip = LogHelper.RequestIp;
-
-            if (request == null || string.IsNullOrWhiteSpace(request.TagName))
-            {
-                _log.Error("[{rid}][{ip}] Incorrect data: putdata", rid, ip);
-                return BadRequest("Tag name is empty");
-            }   
-
-            try
-            {
-                var fetcher = new PhdDataFetcher();
-                var result = fetcher.PutTagValue(request.TagName, request.Value, request.Timestamp, request.Confidence, request.Units);
-
-                _log.Information("[{rid}][{ip}] Complete successfully: tags/put", rid, ip);
-
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _log.Error(ex, "[{rid}][{ip}] Error: tags/put", rid, ip);
 
                 if (ex.Message.Contains("PHD Error"))
                 {
@@ -284,6 +259,44 @@ namespace SmboPhdService.Controllers
             catch (Exception ex)
             {
                 _log.Error(ex, "[{rid}][{ip}] Error: descriptions/by-pattern", rid, ip);
+
+                if (ex.Message.Contains("PHD Error"))
+                {
+                    return Content(System.Net.HttpStatusCode.BadGateway, ex.Message);
+                }
+
+                return InternalServerError(ex);
+            }
+        }
+
+        [HttpPost]
+        [Route("api/tags/put/list")]
+        public IHttpActionResult TagList([FromBody] PutTagListRequest request)
+        {
+            var rid = LogHelper.Requestid;
+            var ip = LogHelper.RequestIp;
+
+            if (request?.Tags == null || request.Tags.Length == 0)
+            {
+                _log.Error("[{rid}][{ip}] Incorrect data: put list data", rid, ip);
+                return BadRequest("Empty tags");
+            }
+
+            try
+            {
+                var fetcher = new PhdDataFetcher();
+                var failedCount = fetcher.PutTagValues(request.Tags);
+
+                _log.Information("[{rid}][{ip}] Complete successfully: tags/put/list", rid, ip);
+
+                PutTagListResp resp = new PutTagListResp();
+                resp.FailedCount = failedCount;
+
+                return Ok(resp);
+            }
+            catch (Exception ex)
+            {
+                _log.Error(ex, "[{rid}][{ip}] Error: tags/put/list", rid, ip);
 
                 if (ex.Message.Contains("PHD Error"))
                 {

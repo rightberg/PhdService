@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using Uniformance.PHD;
 
 namespace SmboPhdService.Services
@@ -9,6 +10,14 @@ namespace SmboPhdService.Services
         public string Tag { get; set; }
         public DateTime Timestamp { get; set; }
         public string Value { get; set; }
+        public short Confidence { get; set; }
+    }
+
+    public class PhdPutData
+    {
+        public string Tag { get; set; }
+        public DateTime Timestamp { get; set; }
+        public object Value { get; set; }
         public short Confidence { get; set; }
     }
 
@@ -40,9 +49,9 @@ namespace SmboPhdService.Services
             {
                 using (var phd = new PHDHistorian())
                 {
-                    if (!fabric) 
+                    if (!fabric)
                         phd.DefaultServer = PhdConnectionFactory.GetServer();
-                    else 
+                    else
                         phd.DefaultServer = PhdConnectionFactory.CreateServer();
 
                     var filter = new TagFilter { Tagname = $"*{pattern.Replace("*", "")}*" };
@@ -136,42 +145,6 @@ namespace SmboPhdService.Services
             catch (Exception ex)
             {
                 throw new Exception("PHD Error fetch data list: " + ex.Message);
-            }
-        }
-
-        public PhdDataPoint PutTagValue(string tagName, double value, DateTime? timestamp = null, sbyte? confidence = null, string units = null, bool fabric = false)
-        {
-            try
-            {
-                using (var phd = new PHDHistorian())
-                {
-
-                    if (!fabric)
-                        phd.DefaultServer = PhdConnectionFactory.GetServer();
-                    else
-                        phd.DefaultServer = PhdConnectionFactory.CreateServer();
-
-                    phd.DefaultServer = PhdConnectionFactory.GetServer();
-
-                    var tag = new Tag { TagName = tagName };
-                    var ts = timestamp ?? DateTime.UtcNow;
-                    var conf = confidence ?? (sbyte)100;
-                    var unit = units ?? string.Empty;
-
-                    phd.PutData(tag, value, ts, conf, unit);
-
-                    return new PhdDataPoint
-                    {
-                        Tag = tagName,
-                        Timestamp = ts,
-                        Value = value.ToString(),
-                        Confidence = conf
-                    };
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("PHD Error put tag value: " + ex.Message);
             }
         }
 
@@ -273,6 +246,87 @@ namespace SmboPhdService.Services
             catch (Exception ex)
             {
                 throw new Exception("PHD Error find tags extended: " + ex.Message);
+            }
+        }
+
+        public PhdDataPoint PutTagValue(string tagName, double value, DateTime? timestamp = null, sbyte? confidence = null, string units = null, bool fabric = false)
+        {
+            try
+            {
+                using (var phd = new PHDHistorian())
+                {
+
+                    if (!fabric)
+                        phd.DefaultServer = PhdConnectionFactory.GetServer();
+                    else
+                        phd.DefaultServer = PhdConnectionFactory.CreateServer();
+
+                    var tag = new Tag { TagName = tagName };
+                    var ts = timestamp ?? DateTime.UtcNow;
+                    var conf = confidence ?? (sbyte)100;
+                    var unit = units ?? string.Empty;
+
+                    phd.PutData(tag, value, ts, conf, unit);
+
+                    return new PhdDataPoint
+                    {
+                        Tag = tagName,
+                        Timestamp = ts,
+                        Value = value.ToString(),
+                        Confidence = conf
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("PHD Error put tag value: " + ex.Message);
+            }
+        }
+
+        public int PutTagValues(PhdPutData[] tags, bool fabric = false)
+        {
+            try
+            {
+                using (var phd = new PHDHistorian())
+                {
+
+                    if (!fabric)
+                        phd.DefaultServer = PhdConnectionFactory.GetServer();
+                    else
+                        phd.DefaultServer = PhdConnectionFactory.CreateServer();
+
+                    int failed = 0;
+                    int pending = 0;
+
+                    var dt = phd.DefaultServer.PutListDataTable;
+
+                    dt.Rows.Clear();
+
+                    var tag_list = new List<Tag>();
+                    foreach (var tag in tags)
+                    {
+                        tag_list.Add(new Tag { TagName = tag.Tag });
+
+                        DataRow dr = dt.NewRow();
+                        dr["TagName"] = tag.Tag;
+                        dr["TimeStamp"] = tag.Timestamp;
+                        dr["Value"] = tag.Value;
+                        dr["Confidence"] = (sbyte)tag.Confidence;
+
+                        dt.Rows.Add(dr);
+                    }
+
+                    var ds = new DataSet();
+                    ds.Tables.Add(dt);
+
+                    phd.PutList(tag_list.ToArray(), ref ds, out failed, out pending);
+
+                    return failed;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("PHD Error put tag value: " + ex.Message);
             }
         }
     }
