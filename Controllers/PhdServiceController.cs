@@ -20,11 +20,6 @@ namespace SmboPhdService.Controllers
             public string Units { get; set; }
         }
 
-        public class PutTagListRequest
-        {
-            public PhdPutData[] Tags { get; set; }
-        }
-
         public class PutTagListResp
         {
             public int FailedCount { get; set; }
@@ -306,12 +301,12 @@ namespace SmboPhdService.Controllers
 
         [HttpPost]
         [Route("api/tags/put/list")]
-        public IHttpActionResult TagList([FromBody] PutTagListRequest request)
+        public IHttpActionResult TagList([FromBody] PhdPutData[] tags)
         {
             var rid = LogHelper.Requestid;
             var ip = LogHelper.RequestIp;
 
-            if (request?.Tags == null || request.Tags.Length == 0)
+            if (tags == null || tags.Length == 0)
             {
                 _log.Error("[{rid}][{ip}] Incorrect data: put list data", rid, ip);
                 return BadRequest("Empty tags");
@@ -320,12 +315,14 @@ namespace SmboPhdService.Controllers
             try
             {
                 var fetcher = new PhdDataFetcher();
-                var failedCount = fetcher.PutTagValues(request.Tags);
+                var failedCount = fetcher.PutTagValues(tags);
 
                 _log.Information("[{rid}][{ip}] Complete successfully: tags/put/list", rid, ip);
 
-                PutTagListResp resp = new PutTagListResp();
-                resp.FailedCount = failedCount;
+                PutTagListResp resp = new PutTagListResp
+                {
+                    FailedCount = failedCount
+                };
 
                 return Ok(resp);
             }

@@ -302,49 +302,79 @@ namespace SmboPhdService.Services
 
                     var tag_list = new List<Tag>();
 
+                    //foreach (var tag in tags)
+                    //{
+                    //    tag_list.Add(new Tag { TagName = tag.Tag });
+
+                    //    DataRow dr = dt.NewRow();
+
+                    //    dr["TimeStamp"] = tag.Timestamp ?? DateTime.UtcNow;
+
+                    //    switch (tag.Value)
+                    //    {
+                    //        case double d:
+                    //        case float f:
+                    //        case decimal dec:
+                    //            dr["Value"] = Convert.ToSingle(tag.Value);
+                    //            break;
+                    //        case int i:
+                    //        case long l:
+                    //        case short sh:
+                    //            dr["Value"] = Convert.ToInt32(tag.Value);
+                    //            break;
+                    //        case string s:
+                    //            dr["Value"] = s;
+                    //            break;
+                    //        default:
+                    //            if (tag.Value != null)
+                    //            {
+                    //                string strValue = tag.Value.ToString();
+                    //                if (float.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float parsedFloat))
+                    //                    dr["Value"] = parsedFloat;
+                    //                else
+                    //                    dr["Value"] = strValue;
+                    //            }
+                    //            else
+                    //            {
+                    //                dr["Value"] = DBNull.Value;
+                    //            }
+                    //            break;
+                    //    }
+
+                    //    dr["Confidence"] = Convert.ToSByte(tag.Confidence);
+
+                    //    dt.Rows.Add(dr);
+                    //}
+
                     foreach (var tag in tags)
                     {
                         tag_list.Add(new Tag { TagName = tag.Tag });
-
                         DataRow dr = dt.NewRow();
-                        
+
                         dr["TimeStamp"] = tag.Timestamp ?? DateTime.UtcNow;
 
-                        switch (tag.Value)
+                        if (tag.Value != null)
                         {
-                            case double d:
-                            case float f:
-                            case decimal dec:
-                                dr["Value"] = Convert.ToSingle(tag.Value);
-                                break;
-                            case int i:
-                            case long l:
-                            case short sh:
-                                dr["Value"] = Convert.ToInt32(tag.Value);
-                                break;
-                            case string s:
-                                dr["Value"] = s;
-                                break;
-                            default:
-                                if (tag.Value != null)
-                                {
-                                    string strValue = tag.Value.ToString();
-                                    if (float.TryParse(strValue, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out float parsedFloat))
-                                        dr["Value"] = parsedFloat;
-                                    else
-                                        dr["Value"] = strValue;
-                                }
-                                else
-                                {
-                                    dr["Value"] = DBNull.Value;
-                                }
-                                break;
+                            try
+                            {
+                                dr["Value"] = Convert.ToSingle(tag.Value, System.Globalization.CultureInfo.InvariantCulture);
+                            }
+                            catch
+                            {
+                                dr["Value"] = tag.Value.ToString();
+                            }
+                        }
+                        else
+                        {
+                            dr["Value"] = DBNull.Value;
                         }
 
-                        dr["Confidence"] = Convert.ToSByte(tag.Confidence);
+
+                        dr["Confidence"] = Convert.ToByte(tag.Confidence);
 
                         dt.Rows.Add(dr);
                     }
+
 
                     var ds = new DataSet();
                     ds.Tables.Add(dt);
