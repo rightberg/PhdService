@@ -31,6 +31,8 @@ namespace SmboPhdService.Controllers
             public string ReductionType { get; set; } = "None";
             public string StartTime { get; set; } = "NOW-1H";
             public string EndTime { get; set; } = "NOW";
+            public int MinConfidence { get; set; } = -1;
+            public uint MaxRows { get; set; } = 0;
             public List<string> Tags { get; set; }
         }
 
@@ -137,7 +139,9 @@ namespace SmboPhdService.Controllers
                     Sampletype = request.SampleType,
                     ReductionType = request.ReductionType,
                     StartTime = request.StartTime,
-                    EndTime = request.EndTime
+                    EndTime = request.EndTime,
+                    MinConfidence = request.MinConfidence,
+                    MaxRows = request.MaxRows,
                 };
 
                 var results = fetcher.FetchDataList(request.Tags, settings);

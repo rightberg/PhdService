@@ -33,6 +33,8 @@ namespace SmboPhdService.Services
         public string ReductionType { get; set; }
         public string StartTime { get; set; }
         public string EndTime { get; set; }
+        public int MinConfidence { get; set; }
+        public uint MaxRows { get; set; }
     }
 
     public class PhdTagBaseInfo
@@ -118,6 +120,18 @@ namespace SmboPhdService.Services
                     phd.ReductionType = Enum.TryParse(settings.ReductionType, true, out REDUCTIONTYPE rt) ? rt : REDUCTIONTYPE.None;
                     phd.StartTime = settings.StartTime ?? "NOW-1H";
                     phd.EndTime = settings.EndTime ?? "NOW";
+
+                    var min_conf = settings.MinConfidence;
+                    if (min_conf != -1)
+                    {
+                        phd.MinimumConfidence = min_conf;
+                    }
+
+                    var max_rows = settings.MaxRows;
+                    if (max_rows > 0)
+                    {
+                        phd.MaximumRows = max_rows;
+                    }
 
                     var tags = new Tags();
                     foreach (var tagName in tagsList)
@@ -302,34 +316,7 @@ namespace SmboPhdService.Services
 
                     var tag_list = new List<Tag>();
 
-                    //foreach (var tag in tags)
-                    //{
-                    //    tag_list.Add(new Tag { TagName = tag.Tag });
-                    //    DataRow dr = dt.NewRow();
 
-                    //    dr["TimeStamp"] = tag.Timestamp ?? DateTime.UtcNow;
-
-                    //    if (tag.Value != null)
-                    //    {
-                    //        try
-                    //        {
-                    //            dr["Value"] = Convert.ToSingle(tag.Value, System.Globalization.CultureInfo.InvariantCulture);
-                    //        }
-                    //        catch
-                    //        {
-                    //            dr["Value"] = tag.Value.ToString();
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        dr["Value"] = DBNull.Value;
-                    //    }
-
-
-                    //    dr["Confidence"] = Convert.ToByte(tag.Confidence);
-
-                    //    dt.Rows.Add(dr);
-                    //}
 
                     foreach (var tag in tags)
                     {
